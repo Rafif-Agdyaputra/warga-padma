@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk Variable", "Plus Jakarta Sans Variable", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  /* utama: marun -> magenta */
+  --color-maroon-50: #fbf1f3;
+  --color-maroon-100: #f5dde3;
+  --color-maroon-200: #ebb8c5;
+  --color-maroon-400: #c4466f;
+  --color-maroon-500: #ac145a;
+  --color-maroon-600: #961545;
+  --color-maroon-700: #801818;
+  --color-maroon-800: #631313;
+  --color-maroon-900: #430d0d;
+
+  /* sekunder: sage */
+  --color-sage-50: #f1f4f2;
+  --color-sage-100: #e0e7e3;
+  --color-sage-200: #c2cfc7;
+  --color-sage-300: #9aaea3;
+  --color-sage-400: #7a8f84;
+  --color-sage-500: #53665c;
+  --color-sage-600: #45564d;
+  --color-sage-700: #37443d;
+  --color-sage-800: #29332e;
+  --color-sage-900: #1c231f;
+
+  /* aksen: amber */
+  --color-amber-50: #fdf7e9;
+  --color-amber-100: #fbecc6;
+  --color-amber-200: #f6d98c;
+  --color-amber-400: #eca825;
+  --color-amber-500: #d8941a;
+  --color-amber-600: #b07514;
+
+  /* netral beton / baja */
+  --color-concrete-50: #f7f5f2;
+  --color-concrete-100: #efece7;
+  --color-concrete-200: #e3dfd8;
+  --color-concrete-300: #cfc9bf;
+  --color-concrete-400: #a9a298;
+  --color-concrete-500: #7d776e;
+  --color-concrete-600: #5c5750;
+  --color-concrete-700: #3f3b36;
+  --color-concrete-800: #2a2724;
+  --color-concrete-900: #1a1816;
+
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+
+  --shadow-soft: 0 1px 2px rgb(42 39 36 / 0.04), 0 8px 24px -12px rgb(42 39 36 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(42 39 36 / 0.05), 0 18px 40px -18px rgb(42 39 36 / 0.25);
+
+  --animate-rise: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade: fade 0.3s ease both;
+  --animate-sheet: sheet 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes sheet {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-concrete-50 text-concrete-800 font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight text-concrete-900;
+  }
+  ::selection {
+    background: var(--color-amber-200);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-amber-400);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* grid blueprint halus */
+  .bg-blueprint {
+    background-image:
+      linear-gradient(to right, rgb(42 39 36 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(42 39 36 / 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .bg-blueprint-dark {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  /* tekstur beton */
+  .bg-concrete-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.15 0 0 0 0 0.14 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .bg-brand {
+    background-image: linear-gradient(120deg, var(--color-maroon-700) 0%, var(--color-maroon-600) 45%, var(--color-maroon-500) 100%);
+  }
+  .text-brand {
+    background-image: linear-gradient(100deg, var(--color-maroon-700), var(--color-maroon-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .card {
+    @apply rounded-2xl border border-concrete-200/80 bg-white shadow-soft;
+  }
+  .label-mono {
+    @apply font-mono text-[10.5px] font-medium uppercase tracking-[0.16em] text-concrete-500;
+  }
+  /* aksen sudut ala plat besi */
+  .rivets {
+    position: relative;
+  }
+  .rivets::before,
+  .rivets::after {
+    content: "";
+    position: absolute;
+    top: 12px;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--color-concrete-300);
+    box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.12);
+  }
+  .rivets::before { left: 12px; }
+  .rivets::after { right: 12px; }
+
+  .hairline-stripe {
+    background-image: repeating-linear-gradient(-45deg, var(--color-amber-400) 0 8px, var(--color-concrete-900) 8px 16px);
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
