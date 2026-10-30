@@ -14,7 +14,7 @@ import { Logo } from "@/components/logo";
 const groups = [
   { title: "Utama", items: [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/moderasi", label: "Moderasi Draft", icon: Inbox, badge: "drafts" },
+    { href: "/admin/moderasi", label: "Moderasi Draft", icon: Inbox, badge: undefined },
     { href: "/admin/warga", label: "Verifikasi Warga", icon: UserCheck, badge: "warga" },
   ] },
   { title: "Konten Warga", items: [
@@ -38,7 +38,7 @@ const groups = [
 const active = (p: string, h: string) => (h === "/admin" ? p === h : p.startsWith(h));
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
-  const { data, ready, isAdmin, user, logout, pendingWarga } = useStore();
+  const { ready, isAdmin, user, logout, pendingWarga } = useStore();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -48,11 +48,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     if (ready && !isAdmin) router.replace("/admin/login");
   }, [ready, isAdmin, router]);
 
-  const drafts =
-    data.kegiatan.filter((x) => x.status === "draft").length +
-    data.pengumuman.filter((x) => x.status === "draft").length +
-    data.pengaduan.filter((x) => x.status === "draft").length +
-    data.umkm.filter((x) => x.status === "draft").length;
+
 
   const current = groups.flatMap((g) => g.items).find((i) => active(pathname, i.href));
 
@@ -85,7 +81,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     <it.icon className={cn("size-[18px]", on ? "text-maroon-600" : "")} />
                     {it.label}
                     {"badge" in it && (() => {
-                      const n = it.badge === "warga" ? pendingWarga : drafts;
+                      const n = it.badge === "warga" ? pendingWarga : 0;
                       return n > 0 ? <span className={cn("ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-bold", on ? "bg-maroon-600 text-white" : "bg-amber-400 text-concrete-900")}>{n}</span> : null;
                     })()}
                   </Link>

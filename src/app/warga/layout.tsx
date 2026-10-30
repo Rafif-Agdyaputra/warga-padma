@@ -1,5 +1,6 @@
+import { PageData } from "@/components/page-data";
 import { WargaShell } from "@/components/warga/shell";
 
 export default function WargaLayout({ children }: { children: React.ReactNode }) {
-  return <WargaShell>{children}</WargaShell>;
+  return <PageData><WargaShell>{children}</WargaShell></PageData>;
 }

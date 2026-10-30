@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSupabase } from "./supabase/client";
 import type { BusinessStatus, RegisterInput, StoreData, WargaProfile, WargaRelation } from "./types";
 import { useToast } from "@/components/ui/toast";
@@ -17,6 +18,12 @@ export interface AuthUser {
 interface StoreApi {
   data: StoreData;
   ready: boolean;
+  pageLoading: boolean;
+  loadedPage: string | null;
+  pageError: string | null;
+  hasMore: boolean;
+  loadMore: () => void;
+  retry: () => void;
   user: AuthUser | null;
   isAdmin: boolean;
   add: <K extends Collection>(key: K, item: Item<K>) => Promise<boolean>;
@@ -65,6 +72,27 @@ export const tableOf: Record<Collection, string> = {
 
 const PUBLIC_HOUSE_COLS = "id,blok,nomor,label,status,x,y,w,h,rotation";
 
+// Halaman ringkasan dan denah memerlukan data lengkap untuk menghitung saldo dan menggambar peta.
+const routes: Record<string, Collection[]> = {
+  "/warga": ["houses", "mapItems", "mapSettings", "pengumuman", "kegiatan", "umkm", "pengurus", "kontak", "transaksi"],
+  "/warga/denah": ["houses", "mapItems", "mapSettings"],
+  "/warga/daftar": ["houses"], "/warga/akun": ["houses"],
+  "/warga/kegiatan": ["kegiatan"], "/warga/pengumuman": ["pengumuman"],
+  "/warga/pengaduan": ["pengaduan"], "/warga/umkm": ["umkm"],
+  "/warga/pengurus": ["pengurus"], "/warga/kontak": ["kontak"],
+  "/warga/keuangan": ["transaksi"], "/warga/transparansi": ["kebutuhan"],
+  "/admin": ["houses", "kegiatan", "pengumuman", "pengaduan", "umkm", "transaksi"],
+  "/admin/moderasi": ["kegiatan", "pengumuman", "pengaduan", "umkm"],
+  "/admin/denah": ["houses", "mapItems", "mapSettings"],
+  "/admin/rumah": ["houses"], "/admin/warga": ["houses"],
+  "/admin/kegiatan": ["kegiatan"], "/admin/pengumuman": ["pengumuman"],
+  "/admin/pengaduan": ["pengaduan"], "/admin/umkm": ["umkm"],
+  "/admin/pengurus": ["pengurus"], "/admin/kontak": ["kontak"],
+  "/admin/keuangan": ["transaksi"], "/admin/kebutuhan": ["kebutuhan"],
+};
+const pagedRoutes = new Set(["/warga/kegiatan", "/warga/pengumuman", "/warga/pengaduan", "/warga/umkm", "/warga/transparansi", "/admin/kegiatan", "/admin/pengumuman", "/admin/pengaduan", "/admin/umkm", "/admin/kebutuhan"]);
+const PAGE_SIZE = 25;
+
 // kolom yang tidak dikirim ke database
 const skip = new Set(["id", "mine", "createdAt", "userId"]);
 const toSnake = (k: string) => (k === "image" ? "image_url" : k.replace(/[A-Z]/g, (c) => "_" + c.toLowerCase()));
@@ -101,6 +129,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [profile, setProfile] = useState<WargaProfile | null>(null);
   const [pendingWarga, setPendingWarga] = useState(0);
+  const pathname = usePathname();
+  const [loadedPage, setLoadedPage] = useState<string | null>(null);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [retryCount, setRetryCount] = useState(0);
+  const requestId = useRef(0);
 
   const fail = useCallback((msg: string, err?: { message?: string; code?: string; details?: string | null; hint?: string | null } | null) => {
     // error supabase tidak enumerable, jadi dicetak per field
@@ -111,53 +147,53 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast(detail ? `${msg}: ${detail}` : msg, "warning");
   }, [toast]);
 
-  // verified = admin / warga disetujui: boleh baca data penghuni rumah
-  const load = useCallback(async (uid: string | null, admin: boolean, verified = admin) => {
-    const q = (t: string) => supabase.from(t).select("*");
-    const [houses, kegiatan, pengumuman, umkm, pengurus, kontak, transaksi, kebutuhan, aduanPublik, aduanSendiri, mapItems, mapSettings] = await Promise.all([
-      verified
-        ? q("houses").order("blok").order("nomor")
-        : supabase.from("houses_public").select("*").order("blok").order("nomor").then(async (r) =>
-            // migrasi 008 belum dijalankan: ambil kolom non-pribadi saja dari tabel lama
-            r.error ? supabase.from("houses").select(PUBLIC_HOUSE_COLS).order("blok").order("nomor") : r,
-          ),
-      q("kegiatan").order("created_at", { ascending: false }),
-      q("pengumuman").order("date", { ascending: false }),
-      q("umkm").order("created_at", { ascending: false }),
-      q("pengurus").order("urutan").order("name"),
-      q("kontak").order("name"),
-      q("transaksi").order("date", { ascending: false }),
-      q("kebutuhan").order("deadline"),
-      admin ? Promise.resolve({ data: [], error: null }) : q("pengaduan_publik").order("created_at", { ascending: false }),
-      // admin: semua pengaduan, warga login: miliknya sendiri (dibatasi rls)
-      uid ? q("pengaduan").order("created_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
-      q("map_items").order("z"),
-      q("map_settings"),
-    ]);
-
-    const results = { houses, kegiatan, pengumuman, umkm, pengurus, kontak, transaksi, kebutuhan, aduanPublik, aduanSendiri, mapItems, mapSettings };
-    const broken = Object.entries(results).find(([, r]) => r.error);
-    if (broken) fail(`Gagal memuat data ${broken[0]}`, broken[1].error);
-
-    const map = (r: { data: Row[] | null }) => (r.data ?? []).map((x) => fromDb(x, uid));
-    const own = map(aduanSendiri);
-    const ownIds = new Set(own.map((x) => x.id));
-    const pengaduan = [...own, ...map(aduanPublik).filter((x) => !ownIds.has(x.id)).map((x) => ({ ...x, status: "published" }))];
-
-    setData({
-      houses: map(houses),
-      kegiatan: map(kegiatan),
-      pengumuman: map(pengumuman),
-      pengaduan,
-      umkm: map(umkm),
-      pengurus: map(pengurus),
-      kontak: map(kontak),
-      transaksi: map(transaksi),
-      kebutuhan: map(kebutuhan),
-      mapItems: map(mapItems),
-      mapSettings: map(mapSettings),
-    } as unknown as StoreData);
-  }, [supabase, fail]);
+  // Ambil hanya koleksi yang dibutuhkan halaman. Dataset yang dipakai untuk
+  // perhitungan dimuat seluruhnya dalam batch agar tidak terpotong batas API.
+  const load = useCallback(async (uid: string | null, admin: boolean, verified: boolean, path: string, pageLimit: number, id: number) => {
+    const keys = routes[path] ?? [];
+    const paged = pagedRoutes.has(path);
+    const fetchRows = async (table: string, order: string, columns = "*", descending = false) => {
+      const rows: Row[] = [];
+      let more = false;
+      for (let offset = 0; ; offset += PAGE_SIZE) {
+        const size = paged ? Math.min(PAGE_SIZE, pageLimit - offset) : PAGE_SIZE;
+        const { data: batch, error } = await supabase.from(table).select(columns)
+          .order(order, { ascending: !descending }).order("id").range(offset, offset + size - 1);
+        if (error) throw new Error(`${table}: ${error.message}`);
+        rows.push(...(batch as unknown as Row[] ?? []));
+        if ((batch?.length ?? 0) < size) break;
+        if (paged && rows.length >= pageLimit) { more = true; break; }
+      }
+      return { rows, more };
+    };
+    const results = await Promise.all(keys.map(async (key) => {
+      if (key === "pengaduan" && !admin) {
+        const [pub, own] = await Promise.all([
+          fetchRows("pengaduan_publik", "created_at", "*", true),
+          uid ? fetchRows("pengaduan", "created_at", "*", true) : Promise.resolve({ rows: [] as Row[], more: false }),
+        ]);
+        const mine = own.rows.map((r) => fromDb(r, uid));
+        const ids = new Set(mine.map((r) => r.id));
+        return { key, rows: [...mine, ...pub.rows.filter((r) => !ids.has(r.id)).map((r) => ({ ...fromDb(r, uid), status: "published" }))], more: pub.more || own.more };
+      }
+      const table = key === "houses" && !verified ? "houses_public" : tableOf[key];
+      const order = ({ houses: "blok", kegiatan: "created_at", pengumuman: "date", umkm: "created_at", pengaduan: "created_at", pengurus: "urutan", kontak: "name", transaksi: "date", kebutuhan: "deadline", mapItems: "z", mapSettings: "id" } as Record<Collection, string>)[key];
+      let result;
+      try { result = await fetchRows(table, order, "*", ["kegiatan", "pengumuman", "umkm", "pengaduan", "transaksi"].includes(key)); }
+      catch (error) {
+        if (key !== "houses" || verified) throw error;
+        result = await fetchRows("houses", order, PUBLIC_HOUSE_COLS);
+      }
+      return { key, rows: result.rows.map((r) => fromDb(r, uid)), more: result.more };
+    }));
+    if (id !== requestId.current) return;
+    setData((old) => {
+      const next = { ...old };
+      for (const result of results) (next as unknown as Record<string, unknown>)[result.key] = result.rows;
+      return next;
+    });
+    setHasMore(results.some((r) => r.more));
+  }, [supabase]);
 
   // pantau sesi login
   useEffect(() => {
@@ -171,53 +207,73 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = useCallback(async (uid: string | null) => {
     if (!uid) return null;
-    const { data: row } = await supabase.from("warga_profiles").select("*").eq("user_id", uid).maybeSingle();
+    const { data: row, error } = await supabase.from("warga_profiles").select("*").eq("user_id", uid).maybeSingle();
+    if (error) throw error;
     return row ? (fromDb(row) as unknown as WargaProfile) : null;
   }, [supabase]);
 
-  // muat ulang data tiap kali user berganti
+  useEffect(() => { setLimit(PAGE_SIZE); }, [pathname, user?.id]);
+
+  // Identitas dan data halaman dimuat bersama; respons lama tidak boleh
+  // menimpa halaman atau sesi yang sudah berubah.
   useEffect(() => {
     if (!authKnown) return;
-    let cancel = false;
+    const id = ++requestId.current;
+    setPageLoading(true);
+    setPageError(null);
+
     (async () => {
-      let admin = false;
-      if (user) {
-        // akun yang sudah dihapus admin: sesi lama dibersihkan
-        const { error: authErr } = await supabase.auth.getUser();
-        if (authErr && /not exist|not found|invalid claim|jwt/i.test(authErr.message)) {
-          await supabase.auth.signOut();
-          toast("Akun Anda sudah tidak terdaftar. Silakan daftar ulang bila masih warga Padma.", "warning");
-          return;
+      try {
+        let admin = false;
+        if (user) {
+          const { error: authErr } = await supabase.auth.getUser();
+          if (authErr) throw authErr;
+          const { data: res, error } = await supabase.rpc("is_admin");
+          if (error) throw error;
+          admin = res === true;
         }
-        const { data: res } = await supabase.rpc("is_admin");
-        admin = res === true;
+        const prof = await loadProfile(user?.id ?? null);
+        let pending = 0;
+        if (admin) {
+          const { count, error } = await supabase.from("warga_profiles").select("user_id", { count: "exact", head: true }).eq("status", "pending");
+          if (error) throw error;
+          pending = count ?? 0;
+        }
+        await load(user?.id ?? null, admin, admin || prof?.status === "approved", pathname, limit, id);
+        if (id !== requestId.current) return;
+        setIsAdmin(admin);
+        setProfile(prof);
+        setPendingWarga(pending);
+        setLoadedPage(`${pathname}:${user?.id ?? "anonymous"}`);
+        setReady(true);
+      } catch (error) {
+        if (id !== requestId.current) return;
+        console.error("Gagal memuat halaman", error);
+        setPageError("Data tidak dapat dimuat. Periksa koneksi dan coba lagi.");
+      } finally {
+        if (id === requestId.current) setPageLoading(false);
       }
-      const prof = await loadProfile(user?.id ?? null);
-      if (admin) {
-        const { count } = await supabase.from("warga_profiles").select("user_id", { count: "exact", head: true }).eq("status", "pending");
-        if (!cancel) setPendingWarga(count ?? 0);
-      }
-      if (cancel) return;
-      setIsAdmin(admin);
-      setProfile(prof);
-      await load(user?.id ?? null, admin, admin || prof?.status === "approved");
-      if (!cancel) setReady(true);
     })();
-    return () => { cancel = true; };
-  }, [authKnown, user, supabase, load, loadProfile, toast]);
+    return () => { requestId.current++; };
+  }, [authKnown, user, supabase, load, loadProfile, pathname, limit, retryCount]);
 
   const refreshProfile = useCallback(async () => {
     const prof = await loadProfile(user?.id ?? null);
-    const nowApproved = prof?.status === "approved";
     setProfile(prof);
-    // status verifikasi berubah: muat ulang agar data penghuni tampil / tersembunyi
-    if (nowApproved !== (profile?.status === "approved")) await load(user?.id ?? null, isAdmin, isAdmin || nowApproved);
-  }, [loadProfile, user, load, isAdmin, profile]);
+    setRetryCount((n) => n + 1);
+  }, [loadProfile, user]);
 
-  const refresh = useCallback(
-    () => load(user?.id ?? null, isAdmin, isAdmin || profile?.status === "approved"),
-    [load, user, isAdmin, profile],
-  );
+  const refresh = useCallback(async () => {
+    const id = ++requestId.current;
+    try {
+      await load(user?.id ?? null, isAdmin, isAdmin || profile?.status === "approved", pathname, limit, id);
+    } catch (error) {
+      setPageError("Data tidak dapat dimuat. Periksa koneksi dan coba lagi.");
+      console.error("Gagal memperbarui data", error);
+    }
+  }, [load, user, isAdmin, profile, pathname, limit]);
+  const loadMore = useCallback(() => setLimit((n) => n + PAGE_SIZE), []);
+  const retry = useCallback(() => setRetryCount((n) => n + 1), []);
 
   // foto dari form berupa dataurl, diunggah dulu ke storage lalu diganti url publik
   const withUploadedImage = useCallback(async (obj: Row) => {
@@ -296,7 +352,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const { data: res, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (error) return authMessage(error.message);
     setUser({ id: res.user.id, email: res.user.email });
-    setProfile(await loadProfile(res.user.id));
     return null;
   }, [supabase, loadProfile]);
 
@@ -344,10 +399,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      data, ready, user, isAdmin, add, update, remove, refresh, setUmkmStatus, loginAdmin, logout,
+      data, ready, loadedPage, pageLoading, pageError, hasMore, loadMore, retry, user, isAdmin, add, update, remove, refresh, setUmkmStatus, loginAdmin, logout,
       profile, isVerified, pendingWarga, loginWarga, registerWarga, submitRegistration, requestPasswordReset, updatePassword, refreshProfile, setPendingWarga,
     }),
-    [data, ready, user, isAdmin, add, update, remove, refresh, setUmkmStatus, loginAdmin, logout,
+    [data, ready, loadedPage, pageLoading, pageError, hasMore, loadMore, retry, user, isAdmin, add, update, remove, refresh, setUmkmStatus, loginAdmin, logout,
       profile, isVerified, pendingWarga, loginWarga, registerWarga, submitRegistration, requestPasswordReset, updatePassword, refreshProfile],
   );
 
