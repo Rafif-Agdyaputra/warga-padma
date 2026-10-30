@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PushSettings } from "../push-settings";
-import { InstallApp } from "../pwa";
 import { Household } from "../household";
 import { Home, KeyRound, LogOut, Mail, Phone, RefreshCw, ShieldCheck, User } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -144,7 +143,6 @@ export function AkunView() {
           {err && !resubmit && <p className="mt-3 rounded-xl bg-maroon-50 px-3.5 py-2.5 text-sm text-maroon-700">{err}</p>}
         </div>
       </div>
-      <InstallApp />
       <PushSettings />
       {profile?.status === "approved" && <Household />}
     </div>

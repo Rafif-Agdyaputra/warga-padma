@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutGrid, LogIn, MessageSquareWarning, ShieldCheck, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { LoginPromptProvider, useLoginPrompt } from "./auth";
+import { InstallApp } from "./pwa";
 import { GlobalSearch } from "./search";
 import { NotificationBell } from "./notifikasi";
 import { Logo } from "@/components/logo";
@@ -149,6 +150,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      <InstallApp />
       <main className="mx-auto max-w-7xl px-4 pb-32 pt-4 md:px-6 md:pb-20 md:pt-8">{children}</main>
 
       {/* footer */}
