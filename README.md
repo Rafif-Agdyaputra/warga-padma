@@ -83,3 +83,7 @@ Foto lama di bucket `uploads` tetap bisa diakses melalui URL publik yang sudah d
 1. Jalankan `node scripts/migrate-pengaduan-photos.mjs` untuk audit, lalu `node scripts/migrate-pengaduan-photos.mjs --apply` untuk menyalin foto yang berasal dari bucket `uploads` proyek ini dan memperbarui referensi pengaduan. Catat objek lama yang dilaporkan. URL eksternal dan foto yang gagal perlu ditangani manual. Skrip tidak menghapus objek lama dan dapat dijalankan kembali.
 2. Untuk setiap objek lama, periksa bahwa tidak ada konten lain atau proses lain yang menggunakannya, lalu hapus menggunakan Storage API/dashboard. Sampai dihapus, URL lama tetap publik; tautan yang pernah disalin atau cache/salinan pihak ketiga tidak dapat ditarik kembali oleh aplikasi.
 3. Verifikasi akses sebagai admin, pelapor, warga lain, dan tanpa login; periksa juga laporan anonim dan proses penghapusan. Setelah migrasi dan pemeriksaan selesai, aktifkan kembali pengiriman.
+
+## Riwayat pengaduan
+
+Jalankan `supabase/010_riwayat_pengaduan.sql` setelah migrasi 009. Pelapor dapat membuka riwayat perubahan status, progres, dan tanggapan pada Laporan Saya. Riwayat bersifat privat bagi pelapor dan admin. Data lama dimulai dengan snapshot saat migrasi; perubahan sebelumnya tidak tersedia. Pembaruan terlihat saat riwayat dibuka kembali, tanpa notifikasi email atau push.

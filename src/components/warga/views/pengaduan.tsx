@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, CircleDot, Loader2, MessageSquareReply, MessageSquareWarning, Pencil, Plus, Trash2 } from "lucide-react";
+import { RiwayatPengaduan } from "../riwayat-pengaduan";
 import { pengaduanPhotoUrl } from "@/lib/pengaduan-photo";
 import { useStore } from "@/lib/store";
 import { cn, tanggal, today, uid } from "@/lib/utils";
@@ -110,6 +111,8 @@ export function PengaduanView() {
                     <div><b>Tanggapan pengurus:</b> {p.response}</div>
                   </div>
                 )}
+
+                {p.mine && <RiwayatPengaduan id={p.id} />}
 
                 {p.mine && p.status !== "published" && (
                   <div className="mt-4 flex gap-2 border-t border-concrete-100 pt-3">
