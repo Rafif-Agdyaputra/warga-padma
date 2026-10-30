@@ -277,16 +277,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // foto dari form berupa dataurl, diunggah dulu ke storage lalu diganti url publik
   const withUploadedImage = useCallback(async (obj: Row, key: Collection) => {
-    const img = obj.image;
-    if (typeof img !== "string" || !img.startsWith("data:")) return obj;
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) throw new Error("Silakan masuk terlebih dahulu untuk mengunggah foto");
-    const blob = await (await fetch(img)).blob();
-    const path = `${auth.user.id}/${crypto.randomUUID()}.jpg`;
-    const bucket = key === "pengaduan" ? "pengaduan-private" : "uploads";
-    const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type || "image/jpeg" });
-    if (error) throw error;
-    return { ...obj, image: key === "pengaduan" ? path : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl };
+    const upload = async (img: unknown) => {
+      if (typeof img !== "string" || !img.startsWith("data:")) return img;
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) throw new Error("Silakan masuk terlebih dahulu untuk mengunggah foto");
+      const blob = await (await fetch(img)).blob();
+      const path = `${auth.user.id}/${crypto.randomUUID()}.jpg`;
+      const bucket = key === "pengaduan" ? "pengaduan-private" : "uploads";
+      const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type || "image/jpeg" });
+      if (error) throw error;
+      return key === "pengaduan" ? path : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+    };
+    const result = { ...obj };
+    if ("image" in result) result.image = await upload(result.image);
+    if (key === "umkm" && Array.isArray(result.catalog)) {
+      const catalog: Row[] = [];
+      for (const item of result.catalog as Row[]) {
+        const next = { ...item };
+        if ("image" in next) next.image = await upload(next.image);
+        if ("sizeChartImage" in next) next.sizeChartImage = await upload(next.sizeChartImage);
+        catalog.push(next);
+      }
+      result.catalog = catalog;
+    }
+    return result;
   }, [supabase]);
 
   const cleanupPhoto = useCallback(async (path: unknown) => {
@@ -411,6 +425,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   const logout = useCallback(async () => {
+    // Lepaskan perangkat ini sebelum sesi berakhir agar akun berikutnya dapat mendaftar.
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+        const sub = await reg?.pushManager?.getSubscription();
+        if (sub) {
+          const { error } = await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+          if (error) console.error("Gagal menghapus langganan push", error);
+          await sub.unsubscribe();
+        }
+      } catch (error) { console.error("Gagal menonaktifkan push saat keluar", error); }
+    }
     await supabase.auth.signOut();
     setIsAdmin(false);
     setProfile(null);

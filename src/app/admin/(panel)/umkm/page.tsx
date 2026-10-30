@@ -2,10 +2,10 @@
 
 import { Store } from "lucide-react";
 import { CrudPage } from "@/components/admin/crud-page";
-import { Badge, StatusBadge } from "@/components/ui";
+import { Badge, Field, Input, StatusBadge } from "@/components/ui";
 import { today } from "@/lib/utils";
 import type { CatalogItem, Umkm } from "@/lib/types";
-import { CatalogEditor, LinksEditor, businessStatusLabel, cleanUmkm, hoursText } from "@/components/umkm/parts";
+import { CatalogEditor, LinksEditor, businessStatusLabel, cleanUmkm, hoursText, priceDigits } from "@/components/umkm/parts";
 
 export default function Page() {
   return (
@@ -45,7 +45,7 @@ export default function Page() {
         { key: "name", label: "Nama usaha", required: true },
         { key: "category", label: "Kategori", type: "select", options: ["Makanan", "Minuman", "Jasa", "Fashion", "Kebutuhan Rumah", "Lainnya"] },
         { key: "description", label: "Deskripsi", type: "textarea", required: true },
-        { key: "price", label: "Kisaran harga", required: true },
+        { key: "price", label: "Harga", type: "custom", render: (v, set) => <Field label="Harga (Rp)" hint="Masukkan angka saja."><Input required inputMode="numeric" pattern="[0-9]+" value={(v as string) ?? ""} onChange={(e) => set(priceDigits(e.target.value))} placeholder="15000" /></Field> },
         { key: "openTime", label: "Jam buka", type: "time" },
         { key: "closeTime", label: "Jam tutup", type: "time" },
         { key: "businessStatus", label: "Status usaha", type: "select", options: [{ value: "aktif", label: "Aktif" }, { value: "libur", label: "Sedang libur" }, { value: "tidak_aktif", label: "Tidak aktif" }] },

@@ -229,7 +229,7 @@ export default function Page() {
         open={!!edit}
         onClose={() => setEdit(null)}
         title="Edit Data Warga"
-        subtitle={edit ? `${edit.row.email} · status verifikasi tidak berubah` : ""}
+        subtitle={edit ? `${edit.row.email} · perubahan rumah memerlukan verifikasi ulang` : ""}
         footer={<><Button variant="ghost" onClick={() => setEdit(null)}>Batal</Button><Button type="submit" form="edit-warga" disabled={busy === edit?.row.user_id}>Simpan</Button></>}
       >
         {edit && (

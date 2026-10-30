@@ -8,7 +8,7 @@ import { useStore } from "@/lib/store";
 import { rupiah, saldo, tanggal } from "@/lib/utils";
 import { Badge, Cover } from "@/components/ui";
 import { HouseMap } from "../house-map";
-import { HoursLine, OpenBadge, isInactive, useNow } from "@/components/umkm/parts";
+import { HoursLine, OpenBadge, isInactive, useNow, formatPrice } from "@/components/umkm/parts";
 import { wargaNav } from "../nav";
 
 export function DashboardView() {
@@ -23,7 +23,7 @@ export function DashboardView() {
   const sMushala = saldo(data.transaksi, "mushala");
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="min-w-0 space-y-6 md:space-y-8">
       {/* hero */}
       <section className="relative animate-rise overflow-hidden rounded-3xl bg-concrete-900 text-white shadow-lift">
         <div className="bg-blueprint-dark absolute inset-0" />
@@ -77,7 +77,7 @@ export function DashboardView() {
           <Link
             key={n.href}
             href={n.href}
-            className="group flex flex-col items-center gap-2 rounded-2xl border border-concrete-200/80 bg-white p-3 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-maroon-200 hover:shadow-lift md:p-4"
+            className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-concrete-200/80 bg-white p-3 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-maroon-200 hover:shadow-lift md:p-4"
           >
             <span className={`grid size-10 place-items-center rounded-xl transition-colors ${i % 3 === 0 ? "bg-maroon-50 text-maroon-700" : i % 3 === 1 ? "bg-sage-50 text-sage-600" : "bg-amber-50 text-amber-600"}`}>
               <n.icon className="size-[18px]" />
@@ -87,10 +87,10 @@ export function DashboardView() {
         ))}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* denah preview */}
-        <section className="card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-concrete-100 px-5 py-4">
+        <section className="card min-w-0 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-concrete-100 px-4 py-4 sm:px-5">
             <div>
               <div className="label-mono">01 / Pemetaan</div>
               <h2 className="mt-1 text-lg font-semibold">Denah Perumahan</h2>
@@ -99,14 +99,14 @@ export function DashboardView() {
               Buka peta <ChevronRight className="size-4" />
             </Link>
           </div>
-          <Link href="/warga/denah" className="block bg-concrete-50 p-3 transition hover:opacity-90">
+          <Link href="/warga/denah" className="block w-full min-w-0 overflow-hidden bg-concrete-50 p-3 transition hover:opacity-90">
             <HouseMap houses={data.houses} compact />
           </Link>
         </section>
 
         {/* pengumuman */}
-        <section className="card flex flex-col">
-          <div className="flex items-center justify-between border-b border-concrete-100 px-5 py-4">
+        <section className="card flex min-w-0 flex-col overflow-hidden">
+          <div className="flex min-w-0 items-center justify-between gap-3 border-b border-concrete-100 px-4 py-4 sm:px-5">
             <div>
               <div className="label-mono">02 / Info Resmi</div>
               <h2 className="mt-1 text-lg font-semibold">Pengumuman</h2>
@@ -121,12 +121,12 @@ export function DashboardView() {
                   <Megaphone className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-semibold text-concrete-800">{p.title}</span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="min-w-0 truncate text-sm font-semibold text-concrete-800">{p.title}</span>
                     {p.priority === "penting" && <Badge tone="maroon">Penting</Badge>}
                   </div>
-                  <p className="mt-0.5 line-clamp-2 text-[13px] text-concrete-500">{p.content}</p>
-                  <span className="mt-1 block font-mono text-[10.5px] uppercase tracking-wider text-concrete-400">{tanggal(p.date)} · {p.category}</span>
+                  <p className="mt-0.5 line-clamp-2 break-words text-[13px] text-concrete-500">{p.content}</p>
+                  <span className="mt-1 block break-words font-mono text-[10.5px] uppercase tracking-wider text-concrete-400">{tanggal(p.date)} · {p.category}</span>
                 </div>
               </Link>
             ))}
@@ -134,10 +134,10 @@ export function DashboardView() {
         </section>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-3">
         {/* kegiatan */}
         <section className="card lg:col-span-2">
-          <div className="flex items-center justify-between border-b border-concrete-100 px-5 py-4">
+          <div className="flex min-w-0 items-center justify-between gap-3 border-b border-concrete-100 px-4 py-4 sm:px-5">
             <div>
               <div className="label-mono">03 / Agenda</div>
               <h2 className="mt-1 text-lg font-semibold">Kegiatan Terdekat</h2>
@@ -192,7 +192,7 @@ export function DashboardView() {
       </div>
 
       {/* umkm */}
-      <section>
+      <section className="min-w-0">
         <div className="mb-4 flex items-end justify-between">
           <div>
             <div className="label-mono">05 / Produk Warga</div>
@@ -212,7 +212,7 @@ export function DashboardView() {
                 <Badge tone="sage">{u.category}</Badge>
                 <div className="mt-2 font-semibold text-concrete-800">{u.name}</div>
                 <div className="mt-0.5 text-xs text-concrete-500">Rumah {u.blokRumah} · {u.owner}</div>
-                <div className="mt-2 font-mono text-[13px] font-semibold text-maroon-700">{u.price}</div>
+                <div className="mt-2 font-mono text-[13px] font-semibold text-maroon-700">{formatPrice(u.price)}</div>
                 <HoursLine u={u} className="mt-1" />
               </div>
             </Link>

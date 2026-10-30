@@ -93,6 +93,10 @@ export interface CatalogItem {
   name: string;
   price?: string;
   note?: string;
+  fashionCategory?: string;
+  sizeChart?: string;
+  image?: string;
+  sizeChartImage?: string;
 }
 
 export interface Umkm {

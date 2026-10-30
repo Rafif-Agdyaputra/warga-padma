@@ -91,3 +91,23 @@ Jalankan `supabase/010_riwayat_pengaduan.sql` setelah migrasi 009. Pelapor dapat
 ## Notifikasi dalam aplikasi
 
 Jalankan `supabase/011_notifikasi.sql` setelah migrasi 010. Notifikasi dibuat untuk perubahan status akun, tindak lanjut pengaduan, serta persetujuan atau penolakan kegiatan dan UMKM oleh admin. Notifikasi hanya terlihat oleh pemilik akun; indikator diperbarui setiap menit dan setelah ditandai dibaca. Tidak ada email atau push. Notifikasi tersimpan sampai akun dihapus.
+
+## Dokumen warga
+
+Jalankan `supabase/013_dokumen_warga.sql` setelah migrasi sebelumnya. Admin dapat mengunggah PDF hingga 10 MB melalui `/admin/dokumen`; daftar tersedia di `/warga/dokumen`. Jalankan juga `supabase/014_dokumen_login.sql` untuk membatasi daftar dan berkas kepada pengguna yang sudah masuk. Setiap pengguna yang masuk dapat mengakses dokumen; hindari mengunggah data pribadi atau rahasia. Jika penghapusan berkas gagal, hapus objek yang tersisa melalui Storage.
+
+## Manajemen penghuni dan rumah
+
+Jalankan `supabase/015_manajemen_penghuni.sql` setelah migrasi sebelumnya. Warga terverifikasi dapat mengajukan perubahan rumah atau hubungan pada halaman akun; pengurus meninjau di `/admin/perpindahan`. Riwayat dimulai saat migrasi. Anggota rumah lain hanya melihat nama dan hubungan warga yang secara sukarela mengaktifkan berbagi profil. Data rumah pada denah dikelola terpisah dan tidak otomatis disinkronkan dengan profil. Perubahan rumah langsung oleh admin mengembalikan profil ke status menunggu verifikasi.
+
+## Profil warga pada denah
+
+Jalankan `supabase/016_denah_profil.sql` setelah 015. Untuk rumah yang memiliki akun terverifikasi, denah menampilkan jumlah akun terverifikasi dan nama serta telepon pemilik yang secara khusus menyetujui tampil di denah melalui halaman akun. Jika ada beberapa pemilik yang setuju, ditampilkan yang terdaftar paling awal. Jumlah akun bukan jumlah seluruh penghuni. Rumah tanpa akun terverifikasi tetap menampilkan data manual; status hunian tetap dikelola pengurus.
+
+## PWA dan notifikasi push
+
+Deploy melalui HTTPS dengan Node.js 22 atau lebih baru. Jalankan `supabase/017_web_push.sql` setelah 011 dan migrasi sebelumnya. PWA dapat dipasang melalui browser; di iPhone tambahkan ke layar utama, lalu buka aplikasi untuk mengaktifkan notifikasi pada halaman Akun.
+
+Buat kunci VAPID sekali melalui `npx web-push generate-vapid-keys`. Simpan `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (misalnya `mailto:admin@example.com`), `SUPABASE_SERVICE_ROLE_KEY`, dan `PUSH_CRON_SECRET` di konfigurasi server deployment. Jangan masukkan kunci privat, service-role, atau cron secret ke kode atau variabel `NEXT_PUBLIC_`. Jadwalkan permintaan GET ke `/api/push/dispatch` dengan header `Authorization: Bearer <PUSH_CRON_SECRET>` secara berkala menggunakan scheduler yang mendukung header rahasia. Endpoint wajib dilindungi; jangan panggil dari browser. Atur frekuensi sesuai penyedia hosting.
+
+Antrean dibuat hanya untuk notifikasi baru setelah migrasi. Pekerjaan gagal dicoba hingga lima kali; pantau antrean `push_queue` dan log server. Retry setelah kegagalan sebagian dapat menyebabkan notifikasi ganda. Notifikasi hanya berisi teks umum dan tautan ke portal. Pengguna dapat menonaktifkan push di halaman akun pada setiap perangkat. PWA ini tidak menyimpan data halaman secara offline.

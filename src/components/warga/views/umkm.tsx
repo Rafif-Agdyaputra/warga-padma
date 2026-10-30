@@ -9,7 +9,7 @@ import { Badge, Button, Cover, EmptyState, Field, ImageInput, Input, Modal, Page
 import { useToast } from "@/components/ui/toast";
 import {
   CatalogEditor, CatalogList, HoursLine, LinkChips, LinksEditor, OpenBadge, businessStatusLabel, cleanUmkm, hoursText,
-  isInactive, openState, useNow,
+  isInactive, openState, useNow, formatPrice, priceDigits,
 } from "@/components/umkm/parts";
 import { DraftNotice } from "../draft-notice";
 import { useRequireLogin } from "../auth";
@@ -130,7 +130,7 @@ export function UmkmView() {
                     <h3 className="mt-2 line-clamp-1 text-sm font-semibold text-concrete-900 md:text-base">{u.name}</h3>
                     <p className="mt-1 line-clamp-2 text-xs text-concrete-500 md:text-[13px]">{off && u.statusNote ? u.statusNote : u.description}</p>
                     <div className="mt-auto space-y-1 pt-3">
-                      <div className="font-mono text-[13px] font-semibold text-maroon-700">{u.price}</div>
+                      <div className="font-mono text-[13px] font-semibold text-maroon-700">{formatPrice(u.price)}</div>
                       <HoursLine u={u} />
                       <div className="flex items-center gap-1 text-[11px] text-concrete-500"><MapPin className="size-3" />Rumah {u.blokRumah}</div>
                     </div>
@@ -167,7 +167,7 @@ export function UmkmView() {
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3">
-              <div className="font-mono text-lg font-semibold text-maroon-700">{detail.price}</div>
+              <div className="font-mono text-lg font-semibold text-maroon-700">{formatPrice(detail.price)}</div>
               <OpenBadge u={detail} now={now} />
               {hoursText(detail) && <HoursLine u={detail} className="text-sm" />}
             </div>
@@ -204,7 +204,7 @@ export function UmkmView() {
             </Field>
           </div>
           <Field label="Deskripsi"><Textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Produk unggulan, area layanan, cara pesan" /></Field>
-          <Field label="Kisaran harga"><Input required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="mis. Rp15.000 atau Mulai Rp50.000" /></Field>
+          <Field label="Harga (Rp)" hint="Masukkan angka saja, misalnya 15000."><Input required inputMode="numeric" pattern="[0-9]+" value={form.price} onChange={(e) => setForm({ ...form, price: priceDigits(e.target.value) })} placeholder="15000" /></Field>
 
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Jam buka"><Input type="time" value={form.openTime ?? ""} onChange={(e) => setForm({ ...form, openTime: e.target.value })} /></Field>

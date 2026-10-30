@@ -62,7 +62,7 @@ export const seed: StoreData = {
       author: "Siti Rahmawati", blokRumah: "A-2", status: "published", createdAt: "2026-10-15",
     },
     {
-      id: "k3", title: "Pengajian Rutin Mushala Al-Padma", date: "2026-10-30", location: "Mushala Al-Padma",
+      id: "k3", title: "Pengajian Rutin Mushola Daarul Hikmah", date: "2026-10-30", location: "Mushola Daarul Hikmah",
       description: "Pengajian bulanan bersama Ustadz Ahmad. Dilanjutkan makan malam bersama.",
       author: "Arif Rahman", blokRumah: "C-5", status: "published", createdAt: "2026-10-12",
     },

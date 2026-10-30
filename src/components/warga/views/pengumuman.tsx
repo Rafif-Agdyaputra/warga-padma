@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Megaphone, Pin } from "lucide-react";
+import { ShareWhatsApp } from "../share-whatsapp";
 import { useStore } from "@/lib/store";
 import { cn, tanggal } from "@/lib/utils";
 import type { Pengumuman } from "@/lib/types";
@@ -59,6 +60,7 @@ export function PengumumanView() {
         {open && (
           <>
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-concrete-700">{open.content}</p>
+            <div className="mt-6"><ShareWhatsApp title={open.title} path={`/warga/pengumuman/${open.id}`} /></div>
             <div className="mt-6 flex items-center gap-2 border-t border-concrete-100 pt-4 text-sm text-concrete-500">
               <Megaphone className="size-4 text-maroon-600" /> Diterbitkan oleh <b className="text-concrete-800">{open.author}</b>
             </div>

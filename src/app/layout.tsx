@@ -8,6 +8,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Warga Padma", template: "%s · Warga Padma" },
+  appleWebApp: { capable: true, title: "Warga Padma", statusBarStyle: "default" },
+  icons: { apple: "/icon-192.png" },
   description: "Portal informasi warga Perumahan Padma — denah, kegiatan, pengumuman, UMKM, dan transparansi kas.",
 };
 

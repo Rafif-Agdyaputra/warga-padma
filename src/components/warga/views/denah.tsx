@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Home, Lock, MessageCircle, Minus, MousePointerClick, Phone, Plus, Search, Users } from "lucide-react";
+import { getSupabase } from "@/lib/supabase/client";
 import { useStore } from "@/lib/store";
 import { useMediaQuery } from "@/lib/hooks";
 import { cn, waLink } from "@/lib/utils";
@@ -18,7 +19,7 @@ function HouseDetail({ h }: { h: House }) {
   const hasPhone = !!h.phone && h.phone !== "-";
   const rows = [
     { k: "Pemilik", v: h.owner, dummy: "Nama Pemilik Rumah", icon: Home },
-    { k: "Jumlah Penghuni", v: h.penghuni ? `${h.penghuni} orang` : "-", dummy: "0 orang", icon: Users },
+    { k: "Akun / penghuni", v: h.penghuni ? `${h.penghuni}` : "-", dummy: "0 orang", icon: Users },
     { k: "Telepon", v: h.phone, dummy: "0812-0000-0000", icon: Phone },
   ];
 
@@ -66,7 +67,9 @@ function HouseDetail({ h }: { h: House }) {
         )}
       </div>
 
-      {isVerified && h.status !== "kosong" && hasPhone && (
+      {isVerified && <p className="mt-3 text-xs text-concrete-500">Untuk rumah dengan akun terverifikasi, jumlah menunjukkan akun terdaftar, bukan seluruh penghuni. Rumah tanpa akun terverifikasi menggunakan data manual pengurus.</p>}
+
+      {isVerified && hasPhone && (
         <div className="mt-4 grid grid-cols-2 gap-2">
           <a href={`tel:${h.phone.replace(/\D/g, "")}`} className="flex h-11 items-center justify-center gap-2 rounded-xl border border-concrete-200 text-sm font-medium text-concrete-700 hover:bg-concrete-50">
             <Phone className="size-4" /> Telepon
@@ -81,7 +84,24 @@ function HouseDetail({ h }: { h: House }) {
 }
 
 export function DenahView() {
-  const { data, isVerified } = useStore();
+  const { data, isVerified, user } = useStore();
+  const [linked, setLinked] = useState<{ house_id: string; account_count: number; owner_name: string | null; owner_phone: string | null }[]>([]);
+  const [linkedError, setLinkedError] = useState(false);
+  useEffect(() => {
+    if (!isVerified || !user) { setLinked([]); return; }
+    let cancelled = false;
+    setLinked([]); setLinkedError(false);
+    const load = async () => {
+      const { data: rows, error } = await getSupabase().rpc("denah_profil");
+      if (!cancelled) { if (error) setLinkedError(true); else setLinked(rows ?? []); }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [isVerified, user]);
+  const houses = useMemo(() => data.houses.map((h) => {
+    const linkedHouse = linked.find((r) => r.house_id === h.id);
+    return linkedHouse ? { ...h, owner: linkedHouse.owner_name ?? "Belum dibagikan", phone: linkedHouse.owner_phone ?? "-", penghuni: Number(linkedHouse.account_count) } : h;
+  }), [data.houses, linked]);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<HouseStatus | "all">("all");
   const [blok, setBlok] = useState("all");
@@ -93,23 +113,24 @@ export function DenahView() {
     if (!q && filter === "all" && blok === "all") return null;
     const s = q.toLowerCase();
     return new Set(
-      data.houses
+      houses
         .filter((h) => (filter === "all" || h.status === filter) && (blok === "all" || h.blok === blok))
         .filter((h) => !s || (isVerified && (h.owner ?? "").toLowerCase().includes(s)) || `${h.blok}${h.nomor}`.toLowerCase().includes(s.replace(/[-\s]/g, "")))
         .map((h) => h.id),
     );
-  }, [data.houses, q, filter, blok, isVerified]);
+  }, [houses, q, filter, blok, isVerified]);
 
-  const bloks = useMemo(() => [...new Set(data.houses.map((h) => h.blok))].sort(), [data.houses]);
+  const bloks = useMemo(() => [...new Set(houses.map((h) => h.blok))].sort(), [houses]);
 
   const counts = useMemo(() => {
     const c = { dihuni: 0, disewakan: 0, kosong: 0 };
-    data.houses.forEach((h) => c[h.status]++);
+    houses.forEach((h) => c[h.status]++);
     return c;
-  }, [data.houses]);
+  }, [houses]);
 
   return (
     <>
+      {linkedError && <p role="alert" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">Data profil belum dapat dimuat; data rumah yang tersimpan ditampilkan.</p>}
       <PageHeader
         index="01"
         eyebrow="Pemetaan Rumah"
@@ -149,7 +170,7 @@ export function DenahView() {
                   onClick={() => setFilter("all")}
                   className={cn("rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition", filter === "all" ? "bg-concrete-900 text-white ring-concrete-900" : "ring-concrete-200 text-concrete-600")}
                 >
-                  Semua · {data.houses.length}
+                  Semua · {houses.length}
                 </button>
                 {(Object.keys(statusStyle) as HouseStatus[]).map((k) => (
                   <button
@@ -173,7 +194,7 @@ export function DenahView() {
             </div>
             <div className="overflow-auto bg-concrete-50">
               <div className="min-w-[720px] p-3 transition-[width] duration-300" style={{ width: `${zoom * 100}%` }}>
-                <HouseMap houses={data.houses} selected={sel?.id} onSelect={setSel} highlight={highlight} />
+                <HouseMap houses={houses} selected={sel?.id} onSelect={setSel} highlight={highlight} />
               </div>
             </div>
             <div className="flex items-center gap-2 border-t border-concrete-100 px-4 py-2.5 text-xs text-concrete-500 md:hidden">

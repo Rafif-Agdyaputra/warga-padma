@@ -1,5 +1,5 @@
 import {
-  Home, Map, CalendarDays, Megaphone, Users, MessageSquareWarning, Phone, Store, Wallet, HandCoins, BookOpen, CalendarRange, type LucideIcon,
+  Home, Map, CalendarDays, Megaphone, Users, MessageSquareWarning, Phone, Store, Wallet, HandCoins, BookOpen, CalendarRange, FileText, type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem { href: string; label: string; icon: LucideIcon; desc: string }
@@ -16,6 +16,7 @@ export const wargaNav: NavItem[] = [
   { href: "/warga/pengaduan", label: "Pengaduan", icon: MessageSquareWarning, desc: "Keluhan & laporan" },
   { href: "/warga/kontak", label: "Kontak", icon: Phone, desc: "Nomor telepon penting" },
   { href: "/warga/kalender", label: "Kalender Kegiatan", icon: CalendarRange, desc: "Jadwal kegiatan warga" },
+  { href: "/warga/dokumen", label: "Dokumen Warga", icon: FileText, desc: "Peraturan, jadwal & formulir" },
   { href: "/warga/panduan", label: "Panduan & Privasi", icon: BookOpen, desc: "Cara menggunakan dan privasi data" },
 ];
 

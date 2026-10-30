@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarDays, Clock, MapPin, Pencil, Plus, Trash2, User } from "lucide-react";
+import { ShareWhatsApp } from "../share-whatsapp";
 import { useStore } from "@/lib/store";
 import { tanggal, today, uid } from "@/lib/utils";
 import type { Kegiatan } from "@/lib/types";
@@ -167,6 +168,7 @@ export function KegiatanView() {
               <div className="rounded-xl bg-concrete-50 p-3"><div className="label-mono mb-1 flex items-center gap-1"><MapPin className="size-3" />Lokasi</div>{detail.location}</div>
             </div>
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-concrete-700">{detail.description}</p>
+            {detail.status === "published" && <div className="mt-5"><ShareWhatsApp title={detail.title} path={`/warga/kegiatan/${detail.id}`} /></div>}
             <p className="mt-5 text-xs text-concrete-500">Diunggah oleh {detail.author} ({detail.blokRumah}) · {tanggal(detail.createdAt)}</p>
           </div>
         )}

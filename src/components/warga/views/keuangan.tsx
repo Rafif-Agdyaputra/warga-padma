@@ -5,10 +5,12 @@ import { ArrowDownLeft, ArrowUpRight, Landmark, Wallet } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn, rupiah, saldo, tanggal, totals } from "@/lib/utils";
 import type { Akun } from "@/lib/types";
-import { PageHeader, Tabs } from "@/components/ui";
+import { Button, PageHeader, Tabs } from "@/components/ui";
+import { useLoginPrompt } from "../auth";
 
 export function KeuanganView() {
-  const { data } = useStore();
+  const { data, user } = useStore();
+  const login = useLoginPrompt();
   const [akun, setAkun] = useState<Akun>("warga");
   const [type, setType] = useState<"all" | "masuk" | "keluar">("all");
 
@@ -20,6 +22,17 @@ export function KeuanganView() {
   const byCat = Object.entries(out.reduce<Record<string, number>>((m, x) => ({ ...m, [x.category]: (m[x.category] ?? 0) + x.amount }), {})).sort((a, b) => b[1] - a[1]);
   const maxCat = Math.max(1, ...byCat.map((c) => c[1]));
 
+  if (!user) return <>
+    <PageHeader index="08" eyebrow="Keuangan Warga" title="Saldo Kas Bersama" description="Laporan kas warga dan mushola yang dikelola bendahara." />
+    <div className="relative overflow-hidden rounded-3xl">
+      <div aria-hidden="true" className="pointer-events-none select-none space-y-5 blur-sm">
+        <div className="grid gap-4 md:grid-cols-2">{["Kas Warga", "Kas Mushola Daarul Hikmah"].map((label) => <div key={label} className="rounded-3xl bg-concrete-800 p-6 text-white"><p className="text-sm">{label}</p><p className="mt-5 text-3xl font-semibold">Rp •••••••</p><p className="mt-6 text-sm">Pemasukan &nbsp;&nbsp;&nbsp; Pengeluaran</p></div>)}</div>
+        <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">{["Riwayat Transaksi", "Alokasi Pengeluaran"].map((label) => <div key={label} className="card min-h-48 p-5"><p className="font-semibold">{label}</p><div className="mt-5 space-y-4">{[0, 1, 2].map((i) => <div key={i} className="h-5 rounded bg-concrete-200" />)}</div></div>)}</div>
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center bg-white/45 p-4"><div className="rounded-2xl border border-concrete-200 bg-white p-6 text-center shadow-lift"><h2 className="font-semibold text-concrete-900">Masuk untuk melihat laporan keuangan</h2><p className="mt-2 text-sm text-concrete-600">Saldo, transaksi, dan alokasi pengeluaran tersedia setelah Anda masuk.</p><Button className="mt-4" onClick={() => login("Masuk untuk melihat laporan keuangan")}>Masuk</Button></div></div>
+    </div>
+  </>;
+
   return (
     <>
       <PageHeader index="08" eyebrow="Keuangan Warga" title="Saldo Kas Bersama" description="Laporan kas warga dan mushala yang dikelola bendahara. Diperbarui setiap ada pemasukan maupun pengeluaran." />
@@ -28,7 +41,7 @@ export function KeuanganView() {
       <div className="mb-6 grid gap-4 md:grid-cols-2">
         {([
           { k: "warga" as const, label: "Kas Warga", icon: Wallet, cls: "bg-brand" },
-          { k: "mushala" as const, label: "Kas Mushala Al-Padma", icon: Landmark, cls: "bg-sage-600" },
+          { k: "mushala" as const, label: "Kas Mushola Daarul Hikmah", icon: Landmark, cls: "bg-sage-600" },
         ]).map((c) => {
           const tt = totals(data.transaksi, c.k);
           return (

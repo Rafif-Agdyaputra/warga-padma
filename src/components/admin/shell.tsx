@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Inbox, PenTool, UserCheck, CalendarDays, Megaphone, MessageSquareWarning, Store, Map, Users, Phone, Wallet, HandCoins,
-  LogOut, Menu, X, ExternalLink,
+  LogOut, Menu, X, ExternalLink, FileText,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,10 @@ const groups = [
   { title: "Data Lingkungan", items: [
     { href: "/admin/denah", label: "Editor Denah", icon: PenTool },
     { href: "/admin/rumah", label: "Data Rumah", icon: Map },
+    { href: "/admin/perpindahan", label: "Pengajuan Rumah", icon: Users },
     { href: "/admin/pengurus", label: "Pengurus", icon: Users },
     { href: "/admin/kontak", label: "Nomor Penting", icon: Phone },
+    { href: "/admin/dokumen", label: "Dokumen Warga", icon: FileText },
   ] },
   { title: "Keuangan", items: [
     { href: "/admin/keuangan", label: "Kas & Transaksi", icon: Wallet },
