@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutGrid, LogIn, MessageSquareWarning, ShieldCheck, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { LoginPromptProvider, useLoginPrompt } from "./auth";
+import { GlobalSearch } from "./search";
 import { NotificationBell } from "./notifikasi";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
@@ -128,6 +129,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2">
+            <GlobalSearch />
             <Link
               href="/warga/pengaduan"
               className="hidden items-center gap-2 rounded-full bg-amber-400 px-4 py-2 text-[13px] font-semibold text-concrete-900 transition hover:bg-amber-500 md:flex"
