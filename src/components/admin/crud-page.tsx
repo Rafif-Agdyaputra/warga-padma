@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Check, Pencil, Plus, Search, Trash2, X, type LucideIcon } from "lucide-react";
+import { pengaduanPhotoUrl } from "@/lib/pengaduan-photo";
 import { useStore } from "@/lib/store";
 import { cn, uid } from "@/lib/utils";
 import type { ModerationStatus, StoreData } from "@/lib/types";
@@ -230,7 +231,7 @@ export function CrudPage<K extends Collection>(p: Props<K>) {
                     {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </Select>
                 ) : f.type === "image" ? (
-                  <ImageInput value={v as string | undefined} onChange={set} />
+                  <ImageInput value={v as string | undefined} onChange={set} preview={p.collection === "pengaduan" ? pengaduanPhotoUrl : undefined} />
                 ) : (
                   <Input
                     required={f.required}

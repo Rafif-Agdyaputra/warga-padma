@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarDays, Check, Inbox, Megaphone, MessageSquareWarning, Store, X } from "lucide-react";
+import { pengaduanPhotoUrl } from "@/lib/pengaduan-photo";
 import { useStore } from "@/lib/store";
 import { tanggal } from "@/lib/utils";
 import type { StoreData } from "@/lib/types";
@@ -18,7 +19,7 @@ function collect(d: StoreData): Item[] {
   return [
     ...d.kegiatan.filter((x) => x.status === "draft").map((x) => ({ key: "kegiatan" as const, id: x.id, title: x.title, body: x.description, meta: `${x.author} · ${x.blokRumah} · ${x.location}`, date: x.createdAt, image: x.image })),
     ...d.pengumuman.filter((x) => x.status === "draft").map((x) => ({ key: "pengumuman" as const, id: x.id, title: x.title, body: x.content, meta: `${x.author} · ${x.category}`, date: x.date })),
-    ...d.pengaduan.filter((x) => x.status === "draft").map((x) => ({ key: "pengaduan" as const, id: x.id, title: x.title, body: x.content, meta: `${x.reporter}${x.anonymous ? " (tampil anonim)" : ""} · ${x.blokRumah} · ${x.category}`, date: x.createdAt, image: x.image })),
+    ...d.pengaduan.filter((x) => x.status === "draft").map((x) => ({ key: "pengaduan" as const, id: x.id, title: x.title, body: x.content, meta: `${x.reporter}${x.anonymous ? " (tampil anonim)" : ""} · ${x.blokRumah} · ${x.category}`, date: x.createdAt, image: pengaduanPhotoUrl(x.image) })),
     ...d.umkm.filter((x) => x.status === "draft").map((x) => ({ key: "umkm" as const, id: x.id, title: x.name, body: x.description, meta: `${x.owner} · ${x.blokRumah} · ${x.price}`, date: x.createdAt, image: x.image })),
   ].sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -37,7 +38,7 @@ export default function ModerasiPage() {
 
   return (
     <>
-      <PageHeader index="00" eyebrow="Sistem Draft" title="Moderasi Kiriman" description="Semua kiriman warga masuk sebagai draft. Setujui untuk menayangkan, atau tolak bila tidak sesuai aturan." />
+      <PageHeader index="00" eyebrow="Sistem Draft" title="Moderasi Kiriman" description="Tinjau isi dan identitas sebelum menayangkan. Nama dan lokasi pengaduan anonim disembunyikan; foto bukti tetap privat." />
 
       <div className="mb-5">
         <Tabs

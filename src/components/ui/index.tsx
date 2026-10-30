@@ -115,7 +115,7 @@ export function Select({ className, children, ...p }: React.SelectHTMLAttributes
   );
 }
 
-export function ImageInput({ value, onChange }: { value?: string; onChange: (v?: string) => void }) {
+export function ImageInput({ value, onChange, preview }: { value?: string; onChange: (v?: string) => void; preview?: (value: string) => string | undefined }) {
   const ref = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   return (
@@ -123,7 +123,7 @@ export function ImageInput({ value, onChange }: { value?: string; onChange: (v?:
       {value ? (
         <div className="group relative overflow-hidden rounded-xl border border-concrete-200">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt="" className="h-44 w-full object-cover" />
+          {(preview ? preview(value) : value) ? <img src={preview ? preview(value) : value} alt="" className="h-44 w-full object-cover" /> : <p className="p-4 text-sm text-concrete-600">Foto lama belum dipindahkan ke penyimpanan privat.</p>}
           <button type="button" onClick={() => onChange(undefined)} className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-concrete-900/70 text-white backdrop-blur transition hover:bg-concrete-900">
             <X className="size-4" />
           </button>

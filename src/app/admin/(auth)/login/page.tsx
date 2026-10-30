@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Lock, Mail } from "lucide-react";
@@ -10,15 +9,14 @@ import { Logo } from "@/components/logo";
 
 export default function LoginPage() {
   const { loginAdmin, isAdmin, ready } = useStore();
-  const router = useRouter();
   const [u, setU] = useState("");
   const [p, setP] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (ready && isAdmin) router.replace("/admin");
-  }, [ready, isAdmin, router]);
+    if (ready && isAdmin) window.location.replace("/admin");
+  }, [ready, isAdmin]);
 
   return (
     <div className="grid min-h-dvh bg-concrete-50 lg:grid-cols-2">
@@ -53,7 +51,7 @@ export default function LoginPage() {
               const msg = await loginAdmin(u, p);
               setBusy(false);
               if (msg) setErr(msg);
-              else router.replace("/admin");
+              else window.location.replace("/admin");
             }}
           >
             <Field label="Email">

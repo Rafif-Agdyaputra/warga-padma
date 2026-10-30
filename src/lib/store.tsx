@@ -276,44 +276,63 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const retry = useCallback(() => setRetryCount((n) => n + 1), []);
 
   // foto dari form berupa dataurl, diunggah dulu ke storage lalu diganti url publik
-  const withUploadedImage = useCallback(async (obj: Row) => {
+  const withUploadedImage = useCallback(async (obj: Row, key: Collection) => {
     const img = obj.image;
     if (typeof img !== "string" || !img.startsWith("data:")) return obj;
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) throw new Error("Silakan masuk terlebih dahulu untuk mengunggah foto");
     const blob = await (await fetch(img)).blob();
     const path = `${auth.user.id}/${crypto.randomUUID()}.jpg`;
-    const { error } = await supabase.storage.from("uploads").upload(path, blob, { contentType: blob.type || "image/jpeg" });
+    const bucket = key === "pengaduan" ? "pengaduan-private" : "uploads";
+    const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type || "image/jpeg" });
     if (error) throw error;
-    return { ...obj, image: supabase.storage.from("uploads").getPublicUrl(path).data.publicUrl };
+    return { ...obj, image: key === "pengaduan" ? path : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl };
+  }, [supabase]);
+
+  const cleanupPhoto = useCallback(async (path: unknown) => {
+    if (typeof path !== "string" || !/^[0-9a-f-]+\/[0-9a-f-]+\.jpg$/.test(path)) return;
+    const { error } = await supabase.storage.from("pengaduan-private").remove([path]);
+    if (error) console.error("Foto tidak dapat dibersihkan; perlu pemeriksaan admin", error);
   }, [supabase]);
 
   const add = useCallback(async <K extends Collection>(key: K, item: Item<K>) => {
+    let uploaded: unknown;
     try {
-      const payload = toDb(await withUploadedImage(item as unknown as Row));
+      const original = item as unknown as Row;
+      const processed = await withUploadedImage(original, key);
+      if (key === "pengaduan" && processed.image !== original.image) uploaded = processed.image;
+      const payload = toDb(processed);
       if (key === "houses" || key === "mapSettings") payload.id = (item as { id: string }).id;
       const { data: row, error } = await supabase.from(tableOf[key]).insert(payload).select().single();
       if (error) throw error;
       setData((d) => ({ ...d, [key]: [fromDb(row, user?.id), ...d[key]] }));
       return true;
     } catch (e) {
+      await cleanupPhoto(uploaded);
       fail("Gagal menyimpan", e as Error);
       return false;
     }
-  }, [supabase, user, withUploadedImage, fail]);
+  }, [supabase, user, withUploadedImage, fail, cleanupPhoto]);
 
   const update = useCallback(async <K extends Collection>(key: K, id: string, patch: Partial<Item<K>>) => {
+    let uploaded: unknown;
+    const previous = key === "pengaduan" ? data.pengaduan.find((row) => row.id === id)?.image : undefined;
     try {
-      const payload = toDb(await withUploadedImage(patch as Row));
+      const original = patch as Row;
+      const processed = await withUploadedImage(original, key);
+      if (key === "pengaduan" && processed.image !== original.image) uploaded = processed.image;
+      const payload = toDb(processed);
       const { data: row, error } = await supabase.from(tableOf[key]).update(payload).eq("id", id).select().single();
       if (error) throw error;
       setData((d) => ({ ...d, [key]: (d[key] as unknown as Row[]).map((x) => (x.id === id ? fromDb(row, user?.id) : x)) }));
+      if (key === "pengaduan" && "image" in original && previous !== processed.image) await cleanupPhoto(previous);
       return true;
     } catch (e) {
+      await cleanupPhoto(uploaded);
       fail("Gagal memperbarui", e as Error);
       return false;
     }
-  }, [supabase, user, withUploadedImage, fail]);
+  }, [supabase, user, withUploadedImage, fail, cleanupPhoto, data.pengaduan]);
 
   const remove = useCallback(async <K extends Collection>(key: K, id: string) => {
     const { error, count } = await supabase.from(tableOf[key]).delete({ count: "exact" }).eq("id", id);
@@ -321,9 +340,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       fail("Gagal menghapus", error ?? { message: "tidak punya akses" });
       return false;
     }
+    const photo = key === "pengaduan" ? data.pengaduan.find((row) => row.id === id)?.image : undefined;
     setData((d) => ({ ...d, [key]: (d[key] as unknown as Row[]).filter((x) => x.id !== id) }));
+    if (photo) await cleanupPhoto(photo);
     return true;
-  }, [supabase, fail]);
+  }, [supabase, fail, cleanupPhoto, data.pengaduan]);
 
   const setUmkmStatus = useCallback(async (id: string, status: BusinessStatus, note?: string) => {
     const { error } = await supabase.rpc("set_umkm_status", { p_id: id, p_status: status, p_note: note ?? null });

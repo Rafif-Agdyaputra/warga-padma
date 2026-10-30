@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, CircleDot, Loader2, MessageSquareReply, MessageSquareWarning, Pencil, Plus, Trash2 } from "lucide-react";
+import { pengaduanPhotoUrl } from "@/lib/pengaduan-photo";
 import { useStore } from "@/lib/store";
 import { cn, tanggal, today, uid } from "@/lib/utils";
 import type { Pengaduan } from "@/lib/types";
@@ -88,6 +89,8 @@ export function PengaduanView() {
                 <p className="mt-1 text-sm leading-relaxed text-concrete-600">{p.content}</p>
                 <div className="mt-2 text-xs text-concrete-500">Pelapor: {p.anonymous ? "Anonim" : p.reporter} · Lokasi {p.blokRumah}</div>
 
+                {p.mine && p.image && pengaduanPhotoUrl(p.image) && <a className="mt-3 inline-block text-sm font-semibold text-maroon-700 underline" href={pengaduanPhotoUrl(p.image)} target="_blank" rel="noreferrer">Lihat foto bukti</a>}
+
                 {/* tahapan */}
                 <div className="mt-4 flex items-center gap-1.5">
                   {(["diterima", "diproses", "selesai"] as const).map((s, idx, arr) => {
@@ -145,14 +148,15 @@ export function PengaduanView() {
             <Field label="Lokasi / nomor rumah"><Input required value={form.blokRumah} onChange={(e) => setForm({ ...form, blokRumah: e.target.value.toUpperCase() })} placeholder="mis. C-4" /></Field>
           </div>
           <Field label="Isi pengaduan"><Textarea required value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Ceritakan kejadian secara faktual: apa, di mana, kapan" /></Field>
-          <Field label="Nama pelapor" hint="Nama tetap diketahui admin untuk verifikasi meskipun ditampilkan anonim.">
+          <Field label="Nama pelapor" hint="Nama dan lokasi tetap diketahui admin; isi laporan yang diterbitkan bisa mengungkap identitas.">
             <Input required value={form.reporter} onChange={(e) => setForm({ ...form, reporter: e.target.value })} />
           </Field>
           <label className="flex items-center gap-2.5 text-sm text-concrete-700">
             <input type="checkbox" checked={form.anonymous} onChange={(e) => setForm({ ...form, anonymous: e.target.checked })} className="size-4 accent-maroon-600" />
-            Tampilkan sebagai anonim untuk warga
+            Sembunyikan nama dan lokasi dari publik
           </label>
-          <Field label="Foto bukti (opsional)"><ImageInput value={form.image} onChange={(image) => setForm({ ...form, image })} /></Field>
+          <Field label="Foto bukti (opsional)"><ImageInput value={form.image} preview={pengaduanPhotoUrl} onChange={(image) => setForm({ ...form, image })} /></Field>
+          <p className="text-sm text-concrete-600">Foto bukti hanya dapat dilihat Anda dan admin, termasuk setelah laporan tayang. Hindari mencantumkan identitas pada judul atau isi jika ingin anonim. Laporan dan foto disimpan sampai dihapus oleh Anda (sebelum tayang) atau admin.</p>
           <DraftNotice text="Pengaduan akan diverifikasi admin terlebih dahulu." />
           <label className="flex items-start gap-2.5 rounded-xl border border-maroon-100 bg-maroon-50/50 p-3.5 text-[13px] text-concrete-700">
             <input type="checkbox" required checked={form.agree} onChange={(e) => setForm({ ...form, agree: e.target.checked })} className="mt-0.5 size-4 accent-maroon-600" />
