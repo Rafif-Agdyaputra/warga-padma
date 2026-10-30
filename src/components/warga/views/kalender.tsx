@@ -15,6 +15,7 @@ export function KalenderView() {
   const { user } = useStore();
   const login = useLoginPrompt();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
+  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -22,6 +23,11 @@ export function KalenderView() {
   const year = month.getFullYear(), index = month.getMonth();
   const days = new Date(year, index + 1, 0).getDate();
   const offset = new Date(year, index, 1).getDay();
+  const selectedDate = dateKey(year, index, selectedDay);
+  const selectedEvents = events.filter((event) => event.date === selectedDate);
+  const now = new Date();
+  const todayKey = dateKey(now.getFullYear(), now.getMonth(), now.getDate());
+  const changeMonth = (delta: number) => { setMonth(new Date(year, index + delta, 1)); setSelectedDay(1); };
   useEffect(() => {
     if (!user) { setEvents([]); return; }
     let cancelled = false;
@@ -44,14 +50,26 @@ export function KalenderView() {
     <PageHeader eyebrow="Agenda Warga" title="Kalender Kegiatan" description="Lihat kegiatan warga yang telah diterbitkan." />
     {!user ? <section className="card p-6 text-center"><CalendarDays className="mx-auto mb-3 size-8 text-maroon-700" /><h2 className="font-semibold">Masuk untuk melihat kalender</h2><p className="mt-2 text-sm text-concrete-600">Gunakan akun warga untuk melihat jadwal kegiatan.</p><Button className="mt-4" onClick={() => login("Masuk untuk melihat kalender kegiatan")}>Masuk</Button></section> : <>
       <section className="card p-4 md:p-6">
-        <div className="mb-5 flex items-center justify-between gap-2"><Button variant="outline" size="sm" aria-label="Bulan sebelumnya" onClick={() => setMonth(new Date(year, index - 1, 1))}><ChevronLeft className="size-4" /></Button><h2 className="text-center font-semibold">{new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(month)}</h2><Button variant="outline" size="sm" aria-label="Bulan berikutnya" onClick={() => setMonth(new Date(year, index + 1, 1))}><ChevronRight className="size-4" /></Button></div>
+        <div className="mb-5 flex items-center justify-between gap-2"><Button variant="outline" size="sm" aria-label="Bulan sebelumnya" onClick={() => changeMonth(-1)}><ChevronLeft className="size-4" /></Button><h2 className="text-center font-semibold">{new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(month)}</h2><Button variant="outline" size="sm" aria-label="Bulan berikutnya" onClick={() => changeMonth(1)}><ChevronRight className="size-4" /></Button></div>
         {error ? <div role="alert" className="py-8 text-center text-sm">Gagal memuat kegiatan. <button className="text-maroon-700 underline" onClick={() => setAttempt((n) => n + 1)}>Coba lagi</button></div> : loading ? <p className="py-8 text-center text-sm" role="status">Memuat kegiatan…</p> : <>
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-concrete-500">{["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d) => <span key={d} className="py-2">{d}</span>)}
-            {Array.from({ length: offset }, (_, i) => <span key={`blank-${i}`} />)}
-            {Array.from({ length: days }, (_, i) => { const day = i + 1; const count = events.filter((event) => event.date === dateKey(year, index, day)).length; return <div key={day} className={`min-h-12 rounded-lg p-1 text-sm ${count ? "bg-maroon-50 font-semibold text-maroon-700" : "bg-concrete-50 text-concrete-600"}`} aria-label={`${day}: ${count} kegiatan`}><span>{day}</span>{count > 0 && <span className="block text-[10px]">{count} kegiatan</span>}</div>; })}
+          <div className="grid grid-cols-7 text-center text-xs font-semibold text-concrete-500">{["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d) => <span key={d} className="py-2">{d}</span>)}</div>
+          <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-concrete-200">
+            {Array.from({ length: offset }, (_, i) => <span key={`blank-${i}`} className="min-h-16 border-b border-r border-concrete-100 bg-concrete-50/50 md:min-h-24" />)}
+            {Array.from({ length: days }, (_, i) => {
+              const day = i + 1;
+              const key = dateKey(year, index, day);
+              const dayEvents = events.filter((event) => event.date === key);
+              const selected = day === selectedDay;
+              return <button key={day} type="button" aria-pressed={selected} aria-label={`${day} ${new Intl.DateTimeFormat("id-ID", { month: "long", year: "numeric" }).format(month)}, ${dayEvents.length} kegiatan`} onClick={() => setSelectedDay(day)} className={`min-h-16 min-w-0 border-b border-r border-concrete-100 p-1.5 text-left transition focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-maroon-700 md:min-h-24 md:p-2 ${selected ? "bg-maroon-50" : "bg-white hover:bg-concrete-50"}`}>
+                <span className={`grid size-7 place-items-center rounded-full text-xs font-semibold ${selected ? "bg-maroon-700 text-white" : key === todayKey ? "ring-1 ring-maroon-700 text-maroon-700" : "text-concrete-700"}`}>{day}</span>
+                {dayEvents.length > 0 && <><span className="mt-1 block truncate rounded bg-maroon-100 px-1 py-0.5 text-[10px] font-medium text-maroon-700 max-md:hidden">{dayEvents[0].title}</span><span className="mt-1 block text-[10px] font-medium text-maroon-700 md:hidden">{dayEvents.length} kegiatan</span>{dayEvents.length > 1 && <span className="hidden text-[10px] text-concrete-500 md:block">+{dayEvents.length - 1} lainnya</span>}</>}
+              </button>;
+            })}
           </div>
-          <h3 className="mt-6 font-semibold">Kegiatan bulan ini</h3>
-          {events.length ? <ul className="mt-3 divide-y divide-concrete-100">{events.map((event) => <li key={event.id} className="py-3"><div className="text-xs font-semibold text-maroon-700">{new Intl.DateTimeFormat("id-ID", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${event.date}T00:00:00Z`))}</div><div className="mt-1 font-semibold">{event.title}</div><p className="text-sm text-concrete-600">{event.location}</p><p className="mt-1 whitespace-pre-wrap text-sm text-concrete-600">{event.description}</p></li>)}</ul> : <p className="mt-3 text-sm text-concrete-500">Belum ada kegiatan yang diterbitkan pada bulan ini.</p>}
+          <section className="mt-6" aria-live="polite">
+            <div className="flex items-baseline justify-between gap-3 border-b border-concrete-100 pb-3"><h3 className="font-semibold">{new Intl.DateTimeFormat("id-ID", { weekday: "long", dateStyle: undefined, day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${selectedDate}T00:00:00Z`))}</h3><span className="text-xs text-concrete-500">{selectedEvents.length} kegiatan</span></div>
+            {selectedEvents.length ? <ul className="divide-y divide-concrete-100">{selectedEvents.map((event) => <li key={event.id} className="flex gap-3 py-4"><div className="mt-1.5 size-2.5 shrink-0 rounded-full bg-maroon-600" /><div className="min-w-0"><h4 className="font-semibold text-concrete-900">{event.title}</h4><p className="mt-1 text-sm text-concrete-600">{event.location}</p>{event.description && <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-concrete-600">{event.description}</p>}</div></li>)}</ul> : <p className="py-6 text-sm text-concrete-500">Tidak ada kegiatan pada tanggal ini. Pilih tanggal lain untuk melihat agendanya.</p>}
+          </section>
         </>}
       </section><p className="mt-4 text-sm text-concrete-600">Ingin mengirim kegiatan? <Link href="/warga/kegiatan" className="font-semibold text-maroon-700 underline">Buka halaman kegiatan</Link>.</p>
     </>}
