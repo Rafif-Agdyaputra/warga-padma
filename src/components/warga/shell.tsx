@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutGrid, LogIn, MessageSquareWarning, ShieldCheck, X } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { LoginPromptProvider, useLoginPrompt } from "./auth";
+import { NotificationBell } from "./notifikasi";
 import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { isActive, wargaNav } from "./nav";
@@ -133,6 +134,7 @@ function ShellInner({ children }: { children: React.ReactNode }) {
             >
               <MessageSquareWarning className="size-4" /> Lapor
             </Link>
+            <NotificationBell />
             <AccountButton />
             <Link
               href="/admin"

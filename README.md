@@ -87,3 +87,7 @@ Foto lama di bucket `uploads` tetap bisa diakses melalui URL publik yang sudah d
 ## Riwayat pengaduan
 
 Jalankan `supabase/010_riwayat_pengaduan.sql` setelah migrasi 009. Pelapor dapat membuka riwayat perubahan status, progres, dan tanggapan pada Laporan Saya. Riwayat bersifat privat bagi pelapor dan admin. Data lama dimulai dengan snapshot saat migrasi; perubahan sebelumnya tidak tersedia. Pembaruan terlihat saat riwayat dibuka kembali, tanpa notifikasi email atau push.
+
+## Notifikasi dalam aplikasi
+
+Jalankan `supabase/011_notifikasi.sql` setelah migrasi 010. Notifikasi dibuat untuk perubahan status akun, tindak lanjut pengaduan, serta persetujuan atau penolakan kegiatan dan UMKM oleh admin. Notifikasi hanya terlihat oleh pemilik akun; indikator diperbarui setiap menit dan setelah ditandai dibaca. Tidak ada email atau push. Notifikasi tersimpan sampai akun dihapus.
