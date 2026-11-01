@@ -21,6 +21,7 @@ const groups = [
     { href: "/admin/kegiatan", label: "Kegiatan", icon: CalendarDays },
     { href: "/admin/pengumuman", label: "Pengumuman", icon: Megaphone },
     { href: "/admin/pengaduan", label: "Pengaduan", icon: MessageSquareWarning },
+    { href: "/admin/tindak-lanjut", label: "Tindak Lanjut", icon: Inbox },
     { href: "/admin/umkm", label: "UMKM & Jasa", icon: Store },
   ] },
   { title: "Data Lingkungan", items: [

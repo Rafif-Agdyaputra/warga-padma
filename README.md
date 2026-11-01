@@ -111,3 +111,7 @@ Deploy melalui HTTPS dengan Node.js 22 atau lebih baru. Jalankan `supabase/017_w
 Buat kunci VAPID sekali melalui `npx web-push generate-vapid-keys`. Simpan `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (misalnya `mailto:admin@example.com`), `SUPABASE_SERVICE_ROLE_KEY`, dan `PUSH_CRON_SECRET` di konfigurasi server deployment. Jangan masukkan kunci privat, service-role, atau cron secret ke kode atau variabel `NEXT_PUBLIC_`. Jadwalkan permintaan GET ke `/api/push/dispatch` dengan header `Authorization: Bearer <PUSH_CRON_SECRET>` secara berkala menggunakan scheduler yang mendukung header rahasia. Endpoint wajib dilindungi; jangan panggil dari browser. Atur frekuensi sesuai penyedia hosting.
 
 Antrean dibuat hanya untuk notifikasi baru setelah migrasi. Pekerjaan gagal dicoba hingga lima kali; pantau antrean `push_queue` dan log server. Retry setelah kegagalan sebagian dapat menyebabkan notifikasi ganda. Notifikasi hanya berisi teks umum dan tautan ke portal. Pengguna dapat menonaktifkan push di halaman akun pada setiap perangkat. PWA ini tidak menyimpan data halaman secara offline.
+
+## Tindak lanjut pengaduan
+
+Jalankan `supabase/018_tindak_lanjut_pengaduan.sql` setelah migrasi sebelumnya. Admin dapat memantau progres dan usia laporan di `/admin/tindak-lanjut`, serta mencatat penanggung jawab dan catatan internal. Usia dihitung sejak laporan dibuat; batas 7 hari merupakan indikator, bukan tenggat. Catatan internal hanya untuk admin. Progres dan tanggapan publik tetap diubah dari menu Pengaduan.
