@@ -115,3 +115,7 @@ Antrean dibuat hanya untuk notifikasi baru setelah migrasi. Pekerjaan gagal dico
 ## Tindak lanjut pengaduan
 
 Jalankan `supabase/018_tindak_lanjut_pengaduan.sql` setelah migrasi sebelumnya. Admin dapat memantau progres dan usia laporan di `/admin/tindak-lanjut`, serta mencatat penanggung jawab dan catatan internal. Usia dihitung sejak laporan dibuat; batas 7 hari merupakan indikator, bukan tenggat. Catatan internal hanya untuk admin. Progres dan tanggapan publik tetap diubah dari menu Pengaduan.
+
+## Usulan dan jajak pendapat
+
+Jalankan `supabase/019_usulan_jajak.sql` setelah migrasi sebelumnya. Warga terverifikasi dapat mengirim usulan dan memberikan satu suara per akun untuk setiap jajak pendapat yang masih terbuka. Pengurus meninjau usulan dan membuat jajak pendapat melalui `/admin/musyawarah`. Pilihan suara tidak dapat diubah; hasil agregat dapat dilihat publik. Identitas pemilih tidak tersedia melalui API warga, tetapi pengelola database memiliki akses dan hasil kelompok kecil bisa ditebak; fitur ini bukan pemungutan suara rahasia formal. Daftar menampilkan hingga 200 usulan dan 100 jajak terbaru.

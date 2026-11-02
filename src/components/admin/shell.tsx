@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Inbox, PenTool, UserCheck, CalendarDays, Megaphone, MessageSquareWarning, Store, Map, Users, Phone, Wallet, HandCoins,
-  LogOut, Menu, X, ExternalLink, FileText,
+  LogOut, Menu, X, ExternalLink, FileText, MessageSquareText,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const groups = [
     { href: "/admin/pengaduan", label: "Pengaduan", icon: MessageSquareWarning },
     { href: "/admin/tindak-lanjut", label: "Tindak Lanjut", icon: Inbox },
     { href: "/admin/umkm", label: "UMKM & Jasa", icon: Store },
+    { href: "/admin/musyawarah", label: "Usulan & Jajak", icon: MessageSquareText },
   ] },
   { title: "Data Lingkungan", items: [
     { href: "/admin/denah", label: "Editor Denah", icon: PenTool },

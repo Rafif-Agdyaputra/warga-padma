@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import {
-  ArrowUpRight, CalendarDays, Home, MapPin, Megaphone, Phone, Store, Users, Wallet, Landmark, AlertTriangle, ChevronRight,
+  ArrowUpRight, CalendarDays, Home, MapPin, Megaphone, Phone, Store, Users, Wallet, Landmark, AlertTriangle, ChevronRight, LayoutGrid,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { rupiah, saldo, tanggal } from "@/lib/utils";
 import { Badge, Cover } from "@/components/ui";
 import { HouseMap } from "../house-map";
 import { HoursLine, OpenBadge, isInactive, useNow, formatPrice } from "@/components/umkm/parts";
-import { wargaNav } from "../nav";
+import { menuUtama } from "../nav";
 
 export function DashboardView() {
   const { data } = useStore();
@@ -72,8 +72,8 @@ export function DashboardView() {
       </section>
 
       {/* quick menu */}
-      <section className="grid animate-rise grid-cols-3 gap-2.5 sm:grid-cols-5 lg:grid-cols-9 [animation-delay:80ms]">
-        {wargaNav.slice(1).map((n, i) => (
+      <section className="grid animate-rise grid-cols-3 gap-2.5 sm:grid-cols-6 [animation-delay:80ms]">
+        {menuUtama.map((n, i) => (
           <Link
             key={n.href}
             href={n.href}
@@ -85,6 +85,7 @@ export function DashboardView() {
             <span className="text-[11.5px] font-medium leading-tight text-concrete-700 md:text-xs">{n.label}</span>
           </Link>
         ))}
+        <Link href="/warga/menu-lain" className="group flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-concrete-200/80 bg-white p-3 text-center shadow-soft transition-all hover:-translate-y-0.5 hover:border-maroon-200 md:p-4"><span className="grid size-10 place-items-center rounded-xl bg-concrete-100 text-concrete-600"><LayoutGrid className="size-[18px]" /></span><span className="text-[11.5px] font-medium leading-tight text-concrete-700 md:text-xs">Menu Lain</span></Link>
       </section>
 
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
